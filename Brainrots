@@ -1,162 +1,124 @@
--- Redzyne Hub V3 (No Key)
+-- HoDat Hub
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
-local Camera = workspace.CurrentCamera
+local HttpService = game:GetService("HttpService")
 
 local LocalPlayer = Players.LocalPlayer
 
 local Settings = {
-ESP = true,
-Tracer = false,
-NameESP = true,
-TeamCheck = false
+    PlayerESP = true,
+    BrainrotESP = true,
+    RareESP = true,
+    TsunamiAlert = true
 }
-
-local tracers = {}
 
 -- UI
 local gui = Instance.new("ScreenGui")
-gui.Name = "VisualHubV3"
+gui.Name = "BrainrotVisualPro"
 gui.Parent = game.CoreGui
 
 local frame = Instance.new("Frame")
 frame.Parent = gui
-frame.Size = UDim2.new(0,220,0,170)
+frame.Size = UDim2.new(0,230,0,180)
 frame.Position = UDim2.new(0,20,0,200)
-frame.BackgroundColor3 = Color3.fromRGB(30,30,30)
+frame.BackgroundColor3 = Color3.fromRGB(25,25,25)
 
 local title = Instance.new("TextLabel")
 title.Parent = frame
 title.Size = UDim2.new(1,0,0,30)
-title.Text = "Visual Hub V3"
+title.Text = "Brainrot Visual PRO"
 title.BackgroundTransparency = 1
 title.TextColor3 = Color3.new(1,1,1)
 
 local function Button(text,y,callback)
-
-local b = Instance.new("TextButton")
-b.Parent = frame
-b.Size = UDim2.new(1,0,0,30)
-b.Position = UDim2.new(0,0,0,y)
-b.Text = text
-b.BackgroundColor3 = Color3.fromRGB(45,45,45)
-b.TextColor3 = Color3.new(1,1,1)
-
-b.MouseButton1Click:Connect(callback)
-
+    local b = Instance.new("TextButton")
+    b.Parent = frame
+    b.Size = UDim2.new(1,0,0,30)
+    b.Position = UDim2.new(0,0,0,y)
+    b.Text = text
+    b.BackgroundColor3 = Color3.fromRGB(40,40,40)
+    b.TextColor3 = Color3.new(1,1,1)
+    b.MouseButton1Click:Connect(callback)
 end
 
-Button("Toggle ESP",35,function()
-Settings.ESP = not Settings.ESP
+Button("Toggle Player ESP",35,function()
+    Settings.PlayerESP = not Settings.PlayerESP
 end)
 
-Button("Toggle Tracer",70,function()
-Settings.Tracer = not Settings.Tracer
+Button("Toggle Brainrot ESP",70,function()
+    Settings.BrainrotESP = not Settings.BrainrotESP
 end)
 
-Button("Toggle NameESP",105,function()
-Settings.NameESP = not Settings.NameESP
+Button("Toggle Rare ESP",105,function()
+    Settings.RareESP = not Settings.RareESP
 end)
 
-Button("Toggle TeamCheck",140,function()
-Settings.TeamCheck = not Settings.TeamCheck
+Button("Toggle Tsunami Alert",140,function()
+    Settings.TsunamiAlert = not Settings.TsunamiAlert
 end)
 
+-- Highlight function
+local function AddHighlight(obj,color)
+    if obj:FindFirstChild("VisualTag") then return end
+    local h = Instance.new("Highlight")
+    h.Name = "VisualTag"
+    h.FillColor = color
+    h.FillTransparency = 0.4
+    h.OutlineTransparency = 0
+    h.Parent = obj
+end
 
--- ESP system
+-- Player ESP
 local function SetupPlayer(player)
+    if player == LocalPlayer then return end
 
-if player == LocalPlayer then return end
-
-player.CharacterAdded:Connect(function(char)
-
-task.wait(1)
-
-if not char:FindFirstChild("HumanoidRootPart") then return end
-
-local highlight = Instance.new("Highlight")
-highlight.FillColor = Color3.fromRGB(255,0,0)
-highlight.FillTransparency = 0.5
-highlight.Parent = char
-
-local bill = Instance.new("BillboardGui")
-bill.Parent = char.Head
-bill.Size = UDim2.new(0,200,0,50)
-bill.AlwaysOnTop = true
-
-local text = Instance.new("TextLabel")
-text.Parent = bill
-text.Size = UDim2.new(1,0,1,0)
-text.BackgroundTransparency = 1
-text.TextColor3 = Color3.new(1,1,1)
-text.TextScaled = true
-
-RunService.RenderStepped:Connect(function()
-
-if not Settings.NameESP then
-text.Text = ""
-return
+    player.CharacterAdded:Connect(function(char)
+        task.wait(1)
+        if Settings.PlayerESP then
+            AddHighlight(char,Color3.fromRGB(255,60,60))
+        end
+    end)
 end
-
-if char and char:FindFirstChild("HumanoidRootPart") and LocalPlayer.Character then
-
-local dist = math.floor((LocalPlayer.Character.HumanoidRootPart.Position - char.HumanoidRootPart.Position).Magnitude)
-
-text.Text = player.Name.." ["..dist.."]"
-
-end
-
-end)
-
-end)
-
-end
-
 
 for _,p in pairs(Players:GetPlayers()) do
-SetupPlayer(p)
+    SetupPlayer(p)
 end
 
 Players.PlayerAdded:Connect(SetupPlayer)
 
+-- Brainrot ESP
+task.spawn(function()
+    while task.wait(2) do
+        if not Settings.BrainrotESP then continue end
 
--- tracer
-RunService.RenderStepped:Connect(function()
+        for _,v in pairs(workspace:GetDescendants()) do
+            if string.find(v.Name:lower(),"brainrot") then
 
-if not Settings.Tracer then return end
+                if Settings.RareESP and (string.find(v.Name:lower(),"mythic") or string.find(v.Name:lower(),"legend")) then
+                    AddHighlight(v,Color3.fromRGB(255,215,0))
+                else
+                    AddHighlight(v,Color3.fromRGB(0,255,120))
+                end
 
-for _,player in pairs(Players:GetPlayers()) do
+            end
+        end
+    end
+end)
 
-if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+-- Tsunami alert
+task.spawn(function()
+    while task.wait(1) do
+        if not Settings.TsunamiAlert then continue end
 
-if Settings.TeamCheck and player.Team == LocalPlayer.Team then
-continue
-end
-
-local pos,visible = Camera:WorldToViewportPoint(player.Character.HumanoidRootPart.Position)
-
-if visible then
-
-if not tracers[player] then
-
-local line = Drawing.new("Line")
-line.Color = Color3.fromRGB(255,0,0)
-line.Thickness = 1
-tracers[player] = line
-
-end
-
-local tracer = tracers[player]
-
-tracer.From = Vector2.new(Camera.ViewportSize.X/2,Camera.ViewportSize.Y)
-tracer.To = Vector2.new(pos.X,pos.Y)
-tracer.Visible = true
-
-end
-
-end
-
-end
-
+        for _,v in pairs(workspace:GetDescendants()) do
+            if string.find(v.Name:lower(),"tsunami") then
+                game.StarterGui:SetCore("SendNotification",{
+                    Title="⚠ Tsunami Warning",
+                    Text="Run to safe area!",
+                    Duration=4
+                })
+            end
+        end
+    end
 end)
