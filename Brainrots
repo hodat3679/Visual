@@ -1,0 +1,162 @@
+-- Redzyne Hub V3 (No Key)
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local Camera = workspace.CurrentCamera
+
+local LocalPlayer = Players.LocalPlayer
+
+local Settings = {
+ESP = true,
+Tracer = false,
+NameESP = true,
+TeamCheck = false
+}
+
+local tracers = {}
+
+-- UI
+local gui = Instance.new("ScreenGui")
+gui.Name = "VisualHubV3"
+gui.Parent = game.CoreGui
+
+local frame = Instance.new("Frame")
+frame.Parent = gui
+frame.Size = UDim2.new(0,220,0,170)
+frame.Position = UDim2.new(0,20,0,200)
+frame.BackgroundColor3 = Color3.fromRGB(30,30,30)
+
+local title = Instance.new("TextLabel")
+title.Parent = frame
+title.Size = UDim2.new(1,0,0,30)
+title.Text = "Visual Hub V3"
+title.BackgroundTransparency = 1
+title.TextColor3 = Color3.new(1,1,1)
+
+local function Button(text,y,callback)
+
+local b = Instance.new("TextButton")
+b.Parent = frame
+b.Size = UDim2.new(1,0,0,30)
+b.Position = UDim2.new(0,0,0,y)
+b.Text = text
+b.BackgroundColor3 = Color3.fromRGB(45,45,45)
+b.TextColor3 = Color3.new(1,1,1)
+
+b.MouseButton1Click:Connect(callback)
+
+end
+
+Button("Toggle ESP",35,function()
+Settings.ESP = not Settings.ESP
+end)
+
+Button("Toggle Tracer",70,function()
+Settings.Tracer = not Settings.Tracer
+end)
+
+Button("Toggle NameESP",105,function()
+Settings.NameESP = not Settings.NameESP
+end)
+
+Button("Toggle TeamCheck",140,function()
+Settings.TeamCheck = not Settings.TeamCheck
+end)
+
+
+-- ESP system
+local function SetupPlayer(player)
+
+if player == LocalPlayer then return end
+
+player.CharacterAdded:Connect(function(char)
+
+task.wait(1)
+
+if not char:FindFirstChild("HumanoidRootPart") then return end
+
+local highlight = Instance.new("Highlight")
+highlight.FillColor = Color3.fromRGB(255,0,0)
+highlight.FillTransparency = 0.5
+highlight.Parent = char
+
+local bill = Instance.new("BillboardGui")
+bill.Parent = char.Head
+bill.Size = UDim2.new(0,200,0,50)
+bill.AlwaysOnTop = true
+
+local text = Instance.new("TextLabel")
+text.Parent = bill
+text.Size = UDim2.new(1,0,1,0)
+text.BackgroundTransparency = 1
+text.TextColor3 = Color3.new(1,1,1)
+text.TextScaled = true
+
+RunService.RenderStepped:Connect(function()
+
+if not Settings.NameESP then
+text.Text = ""
+return
+end
+
+if char and char:FindFirstChild("HumanoidRootPart") and LocalPlayer.Character then
+
+local dist = math.floor((LocalPlayer.Character.HumanoidRootPart.Position - char.HumanoidRootPart.Position).Magnitude)
+
+text.Text = player.Name.." ["..dist.."]"
+
+end
+
+end)
+
+end)
+
+end
+
+
+for _,p in pairs(Players:GetPlayers()) do
+SetupPlayer(p)
+end
+
+Players.PlayerAdded:Connect(SetupPlayer)
+
+
+-- tracer
+RunService.RenderStepped:Connect(function()
+
+if not Settings.Tracer then return end
+
+for _,player in pairs(Players:GetPlayers()) do
+
+if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+
+if Settings.TeamCheck and player.Team == LocalPlayer.Team then
+continue
+end
+
+local pos,visible = Camera:WorldToViewportPoint(player.Character.HumanoidRootPart.Position)
+
+if visible then
+
+if not tracers[player] then
+
+local line = Drawing.new("Line")
+line.Color = Color3.fromRGB(255,0,0)
+line.Thickness = 1
+tracers[player] = line
+
+end
+
+local tracer = tracers[player]
+
+tracer.From = Vector2.new(Camera.ViewportSize.X/2,Camera.ViewportSize.Y)
+tracer.To = Vector2.new(pos.X,pos.Y)
+tracer.Visible = true
+
+end
+
+end
+
+end
+
+end)
