@@ -1,84 +1,91 @@
--- HoDat Hub
+-- Brainrot Visual Hub
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
-local HttpService = game:GetService("HttpService")
 
 local LocalPlayer = Players.LocalPlayer
 
 local Settings = {
     PlayerESP = true,
-    BrainrotESP = true,
-    RareESP = true,
-    TsunamiAlert = true
+    BrainrotESP = true
 }
 
 -- UI
 local gui = Instance.new("ScreenGui")
-gui.Name = "BrainrotVisualPro"
+gui.Name = "BrainrotHub"
 gui.Parent = game.CoreGui
 
-local frame = Instance.new("Frame")
-frame.Parent = gui
-frame.Size = UDim2.new(0,230,0,180)
-frame.Position = UDim2.new(0,20,0,200)
-frame.BackgroundColor3 = Color3.fromRGB(25,25,25)
+local main = Instance.new("Frame")
+main.Parent = gui
+main.Size = UDim2.new(0,420,0,260)
+main.Position = UDim2.new(0.35,0,0.3,0)
+main.BackgroundColor3 = Color3.fromRGB(22,22,22)
 
-local title = Instance.new("TextLabel")
-title.Parent = frame
-title.Size = UDim2.new(1,0,0,30)
-title.Text = "Brainrot Visual PRO"
-title.BackgroundTransparency = 1
-title.TextColor3 = Color3.new(1,1,1)
+local sidebar = Instance.new("Frame")
+sidebar.Parent = main
+sidebar.Size = UDim2.new(0,120,1,0)
+sidebar.BackgroundColor3 = Color3.fromRGB(30,30,30)
 
-local function Button(text,y,callback)
-    local b = Instance.new("TextButton")
-    b.Parent = frame
-    b.Size = UDim2.new(1,0,0,30)
-    b.Position = UDim2.new(0,0,0,y)
-    b.Text = text
-    b.BackgroundColor3 = Color3.fromRGB(40,40,40)
-    b.TextColor3 = Color3.new(1,1,1)
-    b.MouseButton1Click:Connect(callback)
-end
+local content = Instance.new("Frame")
+content.Parent = main
+content.Position = UDim2.new(0,120,0,0)
+content.Size = UDim2.new(1,-120,1,0)
+content.BackgroundTransparency = 1
 
-Button("Toggle Player ESP",35,function()
+-- tab
+local visualTab = Instance.new("TextButton")
+visualTab.Parent = sidebar
+visualTab.Size = UDim2.new(1,0,0,40)
+visualTab.Text = "Visual"
+visualTab.BackgroundColor3 = Color3.fromRGB(40,40,40)
+visualTab.TextColor3 = Color3.new(1,1,1)
+
+-- toggle
+local espToggle = Instance.new("TextButton")
+espToggle.Parent = content
+espToggle.Size = UDim2.new(0,160,0,40)
+espToggle.Position = UDim2.new(0,20,0,20)
+espToggle.Text = "Player ESP : ON"
+espToggle.BackgroundColor3 = Color3.fromRGB(50,50,50)
+
+espToggle.MouseButton1Click:Connect(function()
     Settings.PlayerESP = not Settings.PlayerESP
+
+    if Settings.PlayerESP then
+        espToggle.Text = "Player ESP : ON"
+    else
+        espToggle.Text = "Player ESP : OFF"
+    end
 end)
 
-Button("Toggle Brainrot ESP",70,function()
-    Settings.BrainrotESP = not Settings.BrainrotESP
-end)
+-- highlight function
+local function Highlight(obj,color)
 
-Button("Toggle Rare ESP",105,function()
-    Settings.RareESP = not Settings.RareESP
-end)
+    if obj:FindFirstChild("BrainrotTag") then return end
 
-Button("Toggle Tsunami Alert",140,function()
-    Settings.TsunamiAlert = not Settings.TsunamiAlert
-end)
-
--- Highlight function
-local function AddHighlight(obj,color)
-    if obj:FindFirstChild("VisualTag") then return end
     local h = Instance.new("Highlight")
-    h.Name = "VisualTag"
+    h.Name = "BrainrotTag"
     h.FillColor = color
     h.FillTransparency = 0.4
-    h.OutlineTransparency = 0
     h.Parent = obj
+
 end
 
--- Player ESP
+-- player esp
 local function SetupPlayer(player)
+
     if player == LocalPlayer then return end
 
     player.CharacterAdded:Connect(function(char)
+
         task.wait(1)
+
         if Settings.PlayerESP then
-            AddHighlight(char,Color3.fromRGB(255,60,60))
+            Highlight(char,Color3.fromRGB(255,0,0))
         end
+
     end)
+
 end
 
 for _,p in pairs(Players:GetPlayers()) do
@@ -87,38 +94,21 @@ end
 
 Players.PlayerAdded:Connect(SetupPlayer)
 
--- Brainrot ESP
+-- brainrot esp
 task.spawn(function()
+
     while task.wait(2) do
+
         if not Settings.BrainrotESP then continue end
 
         for _,v in pairs(workspace:GetDescendants()) do
+
             if string.find(v.Name:lower(),"brainrot") then
-
-                if Settings.RareESP and (string.find(v.Name:lower(),"mythic") or string.find(v.Name:lower(),"legend")) then
-                    AddHighlight(v,Color3.fromRGB(255,215,0))
-                else
-                    AddHighlight(v,Color3.fromRGB(0,255,120))
-                end
-
+                Highlight(v,Color3.fromRGB(0,255,120))
             end
-        end
-    end
-end)
 
--- Tsunami alert
-task.spawn(function()
-    while task.wait(1) do
-        if not Settings.TsunamiAlert then continue end
-
-        for _,v in pairs(workspace:GetDescendants()) do
-            if string.find(v.Name:lower(),"tsunami") then
-                game.StarterGui:SetCore("SendNotification",{
-                    Title="⚠ Tsunami Warning",
-                    Text="Run to safe area!",
-                    Duration=4
-                })
-            end
         end
+
     end
+
 end)
